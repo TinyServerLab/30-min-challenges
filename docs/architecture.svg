@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" font-family="-apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-size="13">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1B2A24"/>
+    </marker>
+    <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8A958F"/>
+    </marker>
+  </defs>
+  <rect width="960" height="560" fill="#F6F7F4"/>
+  <text x="32" y="38" font-size="20" fill="#1B2A24" font-family="Iowan Old Style, Palatino, Georgia, serif">Household Ledger — deployment on Raspberry Pi 5</text>
+
+  <!-- Internet / users -->
+  <g>
+    <rect x="32" y="120" width="150" height="70" rx="8" fill="#fff" stroke="#D5D9D2"/>
+    <text x="107" y="150" text-anchor="middle" fill="#1B2A24" font-weight="600">Household</text>
+    <text x="107" y="170" text-anchor="middle" fill="#4F5E57">phones / laptops</text>
+  </g>
+
+  <!-- Cloudflare edge -->
+  <g>
+    <rect x="240" y="80" width="230" height="150" rx="8" fill="#fff" stroke="#D5D9D2"/>
+    <text x="355" y="106" text-anchor="middle" fill="#1B2A24" font-weight="600">Cloudflare edge</text>
+    <text x="355" y="124" text-anchor="middle" fill="#4F5E57">ledger.yourdomain.in · HTTPS</text>
+    <rect x="258" y="140" width="194" height="34" rx="6" fill="#EDEFEA"/>
+    <text x="355" y="162" text-anchor="middle" fill="#1B2A24">Cloudflare Access policy</text>
+    <text x="355" y="196" text-anchor="middle" fill="#4F5E57" font-size="12">allowed emails · one-time PIN</text>
+    <text x="355" y="214" text-anchor="middle" fill="#8A958F" font-size="12">layer 1 of 2</text>
+  </g>
+
+  <!-- Router -->
+  <g>
+    <rect x="520" y="120" width="120" height="70" rx="8" fill="#fff" stroke="#D5D9D2" stroke-dasharray="4 3"/>
+    <text x="580" y="150" text-anchor="middle" fill="#1B2A24" font-weight="600">Home router</text>
+    <text x="580" y="170" text-anchor="middle" fill="#8E2F33" font-size="12">no ports forwarded</text>
+  </g>
+
+  <!-- Pi box -->
+  <rect x="520" y="230" width="408" height="300" rx="10" fill="none" stroke="#1B2A24" stroke-width="1.5"/>
+  <text x="540" y="254" fill="#1B2A24" font-weight="600">Raspberry Pi 5 · Docker Compose · arm64 images</text>
+  <text x="540" y="272" fill="#8A958F" font-size="12">target footprint &lt; 1.5 GB RAM (typical ≈ 300 MB)</text>
+
+  <!-- cloudflared -->
+  <g>
+    <rect x="540" y="290" width="170" height="58" rx="8" fill="#fff" stroke="#D5D9D2"/>
+    <text x="625" y="313" text-anchor="middle" fill="#1B2A24" font-weight="600">cloudflared</text>
+    <text x="625" y="331" text-anchor="middle" fill="#4F5E57" font-size="12">outbound tunnel only</text>
+  </g>
+
+  <!-- app -->
+  <g>
+    <rect x="740" y="290" width="170" height="58" rx="8" fill="#1B2A24"/>
+    <text x="825" y="313" text-anchor="middle" fill="#F6F7F4" font-weight="600">app (FastAPI)</text>
+    <text x="825" y="331" text-anchor="middle" fill="#C9D4CE" font-size="12">login + JWT cookie · layer 2 of 2</text>
+  </g>
+
+  <!-- postgres -->
+  <g>
+    <rect x="740" y="390" width="170" height="58" rx="8" fill="#fff" stroke="#D5D9D2"/>
+    <text x="825" y="413" text-anchor="middle" fill="#1B2A24" font-weight="600">postgres 16</text>
+    <text x="825" y="431" text-anchor="middle" fill="#4F5E57" font-size="12">127.0.0.1:5434 on the Pi</text>
+  </g>
+
+  <!-- backup -->
+  <g>
+    <rect x="540" y="390" width="170" height="58" rx="8" fill="#fff" stroke="#D5D9D2"/>
+    <text x="625" y="413" text-anchor="middle" fill="#1B2A24" font-weight="600">backup (cron)</text>
+    <text x="625" y="431" text-anchor="middle" fill="#4F5E57" font-size="12">pg_dump nightly 02:30</text>
+  </g>
+
+  <!-- local disk + offsite -->
+  <g>
+    <rect x="540" y="472" width="170" height="44" rx="8" fill="#EDEFEA"/>
+    <text x="625" y="491" text-anchor="middle" fill="#1B2A24">./backups on Pi disk</text>
+    <text x="625" y="507" text-anchor="middle" fill="#4F5E57" font-size="12">30-day retention</text>
+    <rect x="740" y="472" width="170" height="44" rx="8" fill="none" stroke="#D5D9D2" stroke-dasharray="4 3"/>
+    <text x="825" y="491" text-anchor="middle" fill="#1B2A24">offsite (rclone)</text>
+    <text x="825" y="507" text-anchor="middle" fill="#8A958F" font-size="12">optional</text>
+  </g>
+
+  <!-- arrows -->
+  <line x1="182" y1="155" x2="238" y2="155" stroke="#1B2A24" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="210" y="145" text-anchor="middle" fill="#4F5E57" font-size="11">https</text>
+
+  <!-- edge to cloudflared: passes "through" router with no inbound port -->
+  <path d="M470,155 L580,155 L580,190" fill="none" stroke="#8A958F" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <path d="M625,288 L625,215 L470,215" fill="none" stroke="#1B2A24" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="590" y="209" text-anchor="end" fill="#4F5E57" font-size="11">tunnel is dialled out from the Pi</text>
+
+  <line x1="710" y1="319" x2="738" y2="319" stroke="#1B2A24" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="724" y="309" text-anchor="middle" fill="#4F5E57" font-size="10">http</text>
+
+  <line x1="825" y1="348" x2="825" y2="388" stroke="#1B2A24" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="835" y="372" fill="#4F5E57" font-size="11">sql</text>
+
+  <line x1="738" y1="419" x2="712" y2="419" stroke="#8A958F" stroke-width="1.5" marker-end="url(#arr2)"/>
+  <line x1="625" y1="448" x2="625" y2="470" stroke="#8A958F" stroke-width="1.5" marker-end="url(#arr2)"/>
+  <line x1="712" y1="494" x2="738" y2="494" stroke="#8A958F" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr2)"/>
+
+  <!-- LAN note -->
+  <text x="32" y="300" fill="#1B2A24" font-weight="600">Defence in depth</text>
+  <text x="32" y="322" fill="#4F5E57">1. Cloudflare Access gate — unknown visitors never reach the Pi</text>
+  <text x="32" y="342" fill="#4F5E57">2. App login — email + password, seeded by admin, 7-day sliding JWT</text>
+  <text x="32" y="362" fill="#4F5E57">3. Containers bind to 127.0.0.1 only; nothing listens on the LAN</text>
+  <text x="32" y="382" fill="#4F5E57">4. Postgres reachable only from the Pi itself (port 5434)</text>
+
+  <text x="32" y="430" fill="#1B2A24" font-weight="600">One command</text>
+  <text x="32" y="452" fill="#4F5E57" font-family="ui-monospace, Menlo, monospace">git pull &amp;&amp; docker compose up -d --build</text>
+</svg>

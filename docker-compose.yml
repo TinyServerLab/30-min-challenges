@@ -1,0 +1,119 @@
+# Household Ledger — Raspberry Pi 5 stack
+# All images are multi-arch with native linux/arm64 builds (no emulation).
+# Deploy / update:  docker compose up -d --build
+
+name: ledger
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: ledger-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ledger}
+      POSTGRES_USER: ${POSTGRES_USER:-ledger}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      # keep Postgres small on the Pi (defaults assume a much bigger box)
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+    command: >
+      postgres -c shared_buffers=64MB -c work_mem=4MB -c maintenance_work_mem=32MB
+               -c effective_cache_size=256MB -c max_connections=20
+               -c log_min_duration_statement=500
+    ports:
+      # 5434 on the Pi -> 5432 in the container. Bound to localhost only; change to
+      # "5434:5432" if you want to reach it from other machines on your LAN.
+      - "${POSTGRES_BIND:-127.0.0.1}:5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ledger} -d ${POSTGRES_DB:-ledger}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+    logging: &log
+      driver: json-file
+      options: { max-size: "5m", max-file: "3" }
+
+  app:
+    build:
+      context: ./backend
+    image: ledger-app:local
+    container_name: ledger-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-ledger}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-ledger}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      JWT_EXPIRY_DAYS: ${JWT_EXPIRY_DAYS:-7}
+      JWT_REFRESH_AFTER_HOURS: ${JWT_REFRESH_AFTER_HOURS:-12}
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      APP_NAME: ${APP_NAME:-Household Ledger}
+      CURRENCY_SYMBOL: ${CURRENCY_SYMBOL:-₹}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      ADMIN_NAME: ${ADMIN_NAME:-Admin}
+      TZ: ${TZ:-Asia/Kolkata}
+    ports:
+      # localhost only. cloudflared reaches it over the docker network as http://app:8000,
+      # so nothing needs to be exposed on the LAN at all.
+      - "127.0.0.1:${APP_PORT:-8085}:8000"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging: *log
+
+  backup:
+    build:
+      context: ./backup
+    image: ledger-backup:local
+    container_name: ledger-backup
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGPORT: "5432"
+      PGDATABASE: ${POSTGRES_DB:-ledger}
+      PGUSER: ${POSTGRES_USER:-ledger}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      BACKUP_CRON: ${BACKUP_CRON:-30 2 * * *}   # 02:30 every night
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-30}
+      RCLONE_REMOTE: ${RCLONE_REMOTE:-}          # e.g. "gdrive:pi-backups/ledger" — optional offsite copy
+      TZ: ${TZ:-Asia/Kolkata}
+    volumes:
+      - ./backups:/backups
+      - ./backup/rclone:/root/.config/rclone:ro   # only needed if RCLONE_REMOTE is set
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    logging: *log
+
+  # Enabled by COMPOSE_PROFILES=tunnel in .env. Leave the profile off if you already run
+  # cloudflared on the Pi itself and point its ingress at http://127.0.0.1:${APP_PORT}.
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: ledger-tunnel
+    restart: unless-stopped
+    profiles: ["tunnel"]
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?set TUNNEL_TOKEN in .env}
+    depends_on:
+      - app
+    deploy:
+      resources:
+        limits:
+          memory: 96M
+    logging: *log
+
+volumes:
+  pgdata:
