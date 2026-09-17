@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="620" viewBox="0 0 1000 620">
+<rect width="1000" height="620" fill="#f8fafc"/>
+<g font-family="Arial, sans-serif" fill="#172033">
+<text x="500" y="38" text-anchor="middle" font-size="24" font-weight="700">Household Finance Tracker — Raspberry Pi 5</text>
+<rect x="370" y="60" width="260" height="55" rx="12" fill="#e0e7ff" stroke="#4f46e5" stroke-width="2"/>
+<text x="500" y="93" text-anchor="middle" font-size="16">Internet / Cloudflare Edge</text>
+<rect x="370" y="145" width="260" height="55" rx="12" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="500" y="178" text-anchor="middle" font-size="16">Cloudflare Access + MFA</text>
+<rect x="370" y="230" width="260" height="55" rx="12" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="500" y="263" text-anchor="middle" font-size="16">cloudflared on Pi host</text>
+<rect x="370" y="315" width="260" height="70" rx="12" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+<text x="500" y="344" text-anchor="middle" font-size="16" font-weight="700">FastAPI + Web UI</text>
+<text x="500" y="367" text-anchor="middle" font-size="13">127.0.0.1:8080 · JWT · CRUD · Reports</text>
+<rect x="150" y="440" width="260" height="80" rx="12" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+<text x="280" y="470" text-anchor="middle" font-size="16" font-weight="700">PostgreSQL 16</text>
+<text x="280" y="494" text-anchor="middle" font-size="13">Docker volume · host 127.0.0.1:5434</text>
+<rect x="590" y="440" width="260" height="80" rx="12" fill="#fce7f3" stroke="#db2777" stroke-width="2"/>
+<text x="720" y="470" text-anchor="middle" font-size="16" font-weight="700">Nightly Backup</text>
+<text x="720" y="494" text-anchor="middle" font-size="13">gzip pg_dump → data/backups</text>
+<g stroke="#64748b" stroke-width="3" fill="none">
+<path d="M500 115v30M500 200v30M500 285v30M430 385l-110 55M570 385l110 55"/>
+</g>
+</g></svg>

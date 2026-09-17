@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Household Finance</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+{% if login_only %}
+<div class="login-wrap">
+  <form class="login-card" method="post" action="/login">
+    <div class="brand">Household Finance</div>
+    <p class="muted">Private household expense tracker</p>
+    {% if request.query_params.get('error') %}<div class="error">Invalid email or password.</div>{% endif %}
+    <label>Email<input name="email" type="email" required autofocus></label>
+    <label>Password<input name="password" type="password" required></label>
+    <button class="primary wide">Sign in</button>
+  </form>
+</div>
+{% else %}
+<header class="topbar">
+  <div><strong>Household Finance</strong><span class="muted"> · {{ user.name }}</span></div>
+  <form method="post" action="/logout"><button class="ghost">Sign out</button></form>
+</header>
+<main class="wrap">
+  <section class="toolbar">
+    <div>
+      <label>From <input id="start" type="date"></label>
+      <label>To <input id="end" type="date"></label>
+      <button class="primary" onclick="refreshAll()">Apply</button>
+    </div>
+    <div>
+      <a id="csv" class="button ghost" href="#">CSV</a>
+      <a id="pdf" class="button ghost" href="#">PDF</a>
+    </div>
+  </section>
+
+  <div class="cards">
+    <div class="card"><span>Income</span><b id="income">₹0</b></div>
+    <div class="card"><span>Expense</span><b id="expense">₹0</b></div>
+    <div class="card"><span>Net Savings</span><b id="savings">₹0</b></div>
+    <div class="card"><span>Net Worth</span><b id="networth">₹0</b></div>
+  </div>
+
+  <section class="grid2">
+    <div class="panel"><h2>Expenses by category</h2><div id="donut" class="donut"></div><div id="legend" class="legend"></div></div>
+    <div class="panel"><h2>Daily net movement</h2><div id="trend" class="bars"></div></div>
+  </section>
+
+  <section class="panel">
+    <div class="section-head"><h2>Transactions</h2><button class="primary" onclick="openTxn()">+ Transaction</button></div>
+    <div class="table-scroll"><table><thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Source</th><th>Amount</th><th>Note</th><th></th></tr></thead><tbody id="txnRows"></tbody></table></div>
+  </section>
+
+  <section class="grid2">
+    <div class="panel"><div class="section-head"><h2>Categories</h2><button class="ghost" onclick="openCat()">+ Add</button></div><div id="cats"></div></div>
+    <div class="panel"><div class="section-head"><h2>Payment sources</h2><button class="ghost" onclick="openSource()">+ Add</button></div><div id="sources"></div></div>
+  </section>
+
+  <section class="panel">
+    <div class="section-head"><h2>Savings & Investments</h2><button class="primary" onclick="openInv()">+ Investment</button></div>
+    <div class="table-scroll"><table><thead><tr><th>Name</th><th>Type</th><th>Contribution</th><th>Current value</th><th>Date</th><th></th></tr></thead><tbody id="invRows"></tbody></table></div>
+  </section>
+
+  {% if user.is_admin %}
+  <section class="panel"><div class="section-head"><h2>Household users</h2><button class="ghost" onclick="openUser()">+ Add user</button></div><div id="users"></div></section>
+  {% endif %}
+</main>
+
+<div id="modal" class="modal hidden"><div class="modal-card"><div class="section-head"><h2 id="modalTitle"></h2><button class="ghost" onclick="closeModal()">×</button></div><div id="modalBody"></div></div></div>
+<script>window.IS_ADMIN={{ "true" if user.is_admin else "false" }};</script>
+<script src="/static/app.js"></script>
+{% endif %}
+</body>
+</html>

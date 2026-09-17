@@ -1,0 +1,13 @@
+# cloudflared runs on the Pi HOST, not in Docker.
+# Add the route below to your existing tunnel configuration.
+# Replace finance.example.com with your custom domain.
+#
+# ingress:
+#   - hostname: finance.example.com
+#     service: http://127.0.0.1:8080
+#   - service: http_status:404
+#
+# Then protect the hostname with Cloudflare Zero Trust Access:
+#   Application: https://finance.example.com
+#   Policy: Allow -> your household email(s)
+#   Prefer an identity provider + MFA.
