@@ -1,0 +1,24 @@
+# Snippet for your existing host-level cloudflared config (typically
+# /etc/cloudflared/config.yml or ~/.cloudflared/config.yml).
+# Add an ingress rule pointing your chosen subdomain at the app container's
+# published localhost port — do NOT point it at the db or backup services.
+#
+# This assumes cloudflared is already installed and tunnelled on the Pi
+# (per your tinyserverlab setup), so only the ingress rule is new.
+
+tunnel: <your-existing-tunnel-id>
+credentials-file: /etc/cloudflared/<your-existing-tunnel-id>.json
+
+ingress:
+  # ... your existing rules for other services stay above this one ...
+  - hostname: finance.yourdomain.tld
+    service: http://127.0.0.1:8090
+  - service: http_status:404
+
+# Then, in Cloudflare Zero Trust (dash.cloudflare.com > Access > Applications):
+#   1. Create an Access application for finance.yourdomain.tld
+#   2. Add a policy that allows only your household's email addresses
+#      (or a one-time-PIN login rule)
+#   3. This gives you defense in depth: Access blocks unauthorized visitors
+#      before they even reach the login page; the app's own JWT auth
+#      gates what an authenticated-through-Access visitor can then do.

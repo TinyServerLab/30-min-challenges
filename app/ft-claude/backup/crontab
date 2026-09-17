@@ -1,0 +1,2 @@
+# Nightly backup at 02:30 local time (container TZ set via compose env).
+30 2 * * * /app/backup.sh >> /proc/1/fd/1 2>> /proc/1/fd/2
