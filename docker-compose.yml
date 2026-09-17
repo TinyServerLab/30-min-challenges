@@ -60,7 +60,6 @@ services:
       ADMIN_NAME: ${ADMIN_NAME:-Admin}
       TZ: ${TZ:-Asia/Kolkata}
     ports:
-      # localhost only. cloudflared reaches it over the docker network as http://app:8000,
       # so nothing needs to be exposed on the LAN at all.
       - "127.0.0.1:${APP_PORT:-8085}:8000"
     deploy:
@@ -95,24 +94,6 @@ services:
       resources:
         limits:
           memory: 128M
-    logging: *log
-
-  # Enabled by COMPOSE_PROFILES=tunnel in .env. Leave the profile off if you already run
-  # cloudflared on the Pi itself and point its ingress at http://127.0.0.1:${APP_PORT}.
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    container_name: ledger-tunnel
-    restart: unless-stopped
-    profiles: ["tunnel"]
-    command: tunnel --no-autoupdate run
-    environment:
-      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?set TUNNEL_TOKEN in .env}
-    depends_on:
-      - app
-    deploy:
-      resources:
-        limits:
-          memory: 96M
     logging: *log
 
 volumes:
