@@ -16,7 +16,8 @@ export default function Dashboard() {
   const [start, setStart] = useState(firstOfMonth());
   const [end, setEnd] = useState(lastOfMonth());
   const [summary, setSummary] = useState(null);
-  const [trend, setTrend] = useState([]);
+  const [savingsTrend, setSavingsTrend] = useState([]);
+  const [investmentTrend, setInvestmentTrend] = useState([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -24,12 +25,20 @@ export default function Dashboard() {
     setError("");
     Promise.all([
       api.get(`/dashboard/summary?start=${start}&end=${end}`),
-      api.get(`/dashboard/networth-trend?months=12`),
+      api.get(`/dashboard/savings-trend?months=12`),
+      api.get(`/dashboard/investment-trend?months=12`),
     ])
-      .then(([s, t]) => {
+      .then(([s, savings, inv]) => {
         if (cancelled) return;
         setSummary(s);
-        setTrend(t.map((p) => ({ ...p, net_worth: Number(p.net_worth) })));
+        setSavingsTrend(savings.map((p) => ({ ...p, cumulative_savings: Number(p.cumulative_savings) })));
+        setInvestmentTrend(
+          inv.map((p) => ({
+            ...p,
+            cumulative_contribution: Number(p.cumulative_contribution),
+            cumulative_current_value: Number(p.cumulative_current_value),
+          }))
+        );
       })
       .catch((e) => !cancelled && setError(e.message));
     return () => {
@@ -44,11 +53,15 @@ export default function Dashboard() {
       color: c.color,
     })) || [];
 
+  const hasInvestmentData = investmentTrend.some(
+    (p) => p.cumulative_contribution !== 0 || p.cumulative_current_value !== 0
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h2 className="text-xl font-semibold">Dashboard</h2>
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex flex-wrap items-center gap-2 text-sm">
           <label className="text-slate-500">From</label>
           <input type="date" value={start} onChange={(e) => setStart(e.target.value)} className="border border-slate-300 rounded px-2 py-1" />
           <label className="text-slate-500">To</label>
@@ -85,17 +98,38 @@ export default function Dashboard() {
         </div>
 
         <div className="bg-white rounded-lg shadow p-4">
-          <h3 className="text-sm font-semibold text-slate-600 mb-2">Net worth trend (12 months)</h3>
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={trend}>
+          <h3 className="text-sm font-semibold text-slate-600 mb-2">Cash savings trend (12 months)</h3>
+          <p className="text-xs text-slate-400 mb-2">Cumulative income minus expenses. Investments are tracked separately below.</p>
+          <ResponsiveContainer width="100%" height={260}>
+            <LineChart data={savingsTrend}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis dataKey="month" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 11 }} />
               <Tooltip formatter={(v) => Number(v).toFixed(2)} />
-              <Line type="monotone" dataKey="net_worth" stroke="#0f172a" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="cumulative_savings" name="Cumulative savings" stroke="#0f172a" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>
+      </div>
+
+      <div className="bg-white rounded-lg shadow p-4">
+        <h3 className="text-sm font-semibold text-slate-600 mb-2">Investment growth (12 months)</h3>
+        <p className="text-xs text-slate-400 mb-2">Contributed vs. current value, on its own timeline — not merged into cash savings.</p>
+        {!hasInvestmentData ? (
+          <p className="text-sm text-slate-400 py-8 text-center">No investment entries yet.</p>
+        ) : (
+          <ResponsiveContainer width="100%" height={260}>
+            <LineChart data={investmentTrend}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 11 }} />
+              <Tooltip formatter={(v) => Number(v).toFixed(2)} />
+              <Legend />
+              <Line type="monotone" dataKey="cumulative_contribution" name="Contributed" stroke="#0ea5e9" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="cumulative_current_value" name="Current value" stroke="#16a34a" strokeWidth={2} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        )}
       </div>
     </div>
   );

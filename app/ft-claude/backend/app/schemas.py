@@ -154,8 +154,12 @@ class DashboardSummary(BaseModel):
     expense_by_category: list[CategoryBreakdownItem]
 
 
-class NetWorthPoint(BaseModel):
+class SavingsTrendPoint(BaseModel):
     month: str  # "YYYY-MM"
     cumulative_savings: Decimal
-    investments_value: Decimal
-    net_worth: Decimal
+
+
+class InvestmentTrendPoint(BaseModel):
+    month: str  # "YYYY-MM"
+    cumulative_contribution: Decimal
+    cumulative_current_value: Decimal

@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.deps import get_current_user
 from app.models import Transaction, Category, Investment, TxnType, User
-from app.schemas import DashboardSummary, CategoryBreakdownItem, NetWorthPoint
+from app.schemas import DashboardSummary, CategoryBreakdownItem, SavingsTrendPoint, InvestmentTrendPoint
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
@@ -68,12 +68,16 @@ def summary(
     )
 
 
-@router.get("/networth-trend", response_model=list[NetWorthPoint])
-def networth_trend(
+@router.get("/savings-trend", response_model=list[SavingsTrendPoint])
+def savings_trend(
     months: int = Query(12, ge=1, le=60),
     db: Session = Depends(get_db),
     _: User = Depends(get_current_user),
 ):
+    """Cumulative cash savings (income − expense) by month, from transactions
+    only. Investments are intentionally excluded here — see
+    /dashboard/investment-trend for that, plotted on its own timeline rather
+    than merged into this one."""
     today = date.today()
     range_start = today.replace(day=1) - relativedelta(months=months - 1)
 
@@ -94,21 +98,64 @@ def networth_trend(
     )
     net_by_month = {row.month: Decimal(row.income) - Decimal(row.expense) for row in monthly_net}
 
-    inv_total = db.query(func.coalesce(func.sum(Investment.current_value), 0)).scalar()
-    inv_total = Decimal(inv_total)
-
-    points: list[NetWorthPoint] = []
+    points: list[SavingsTrendPoint] = []
     cumulative = Decimal("0")
     cursor = range_start
     for _i in range(months):
         key = cursor.strftime("%Y-%m")
         cumulative += net_by_month.get(key, Decimal("0"))
+        points.append(SavingsTrendPoint(month=key, cumulative_savings=cumulative))
+        cursor = cursor + relativedelta(months=1)
+    return points
+
+
+@router.get("/investment-trend", response_model=list[InvestmentTrendPoint])
+def investment_trend(
+    months: int = Query(12, ge=1, le=60),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    """Investment growth on its own timeline, keyed off each entry's
+    entry_date — cumulative amount contributed vs. cumulative current value,
+    as of each month. Kept separate from the cash savings trend rather than
+    merged into a single net-worth line."""
+    today = date.today()
+    range_start = today.replace(day=1) - relativedelta(months=months - 1)
+
+    monthly_inv = (
+        db.query(
+            func.to_char(Investment.entry_date, "YYYY-MM").label("month"),
+            func.coalesce(func.sum(Investment.contribution_amount), 0).label("contribution"),
+            func.coalesce(func.sum(Investment.current_value), 0).label("current_value"),
+        )
+        .group_by("month")
+        .order_by("month")
+        .all()
+    )
+    contribution_by_month = {row.month: Decimal(row.contribution) for row in monthly_inv}
+    value_by_month = {row.month: Decimal(row.current_value) for row in monthly_inv}
+
+    # Anything entered before the visible window still counts toward the
+    # starting cumulative totals.
+    earliest_key = range_start.strftime("%Y-%m")
+    cumulative_contribution = sum(
+        (v for k, v in contribution_by_month.items() if k < earliest_key), Decimal("0")
+    )
+    cumulative_value = sum(
+        (v for k, v in value_by_month.items() if k < earliest_key), Decimal("0")
+    )
+
+    points: list[InvestmentTrendPoint] = []
+    cursor = range_start
+    for _i in range(months):
+        key = cursor.strftime("%Y-%m")
+        cumulative_contribution += contribution_by_month.get(key, Decimal("0"))
+        cumulative_value += value_by_month.get(key, Decimal("0"))
         points.append(
-            NetWorthPoint(
+            InvestmentTrendPoint(
                 month=key,
-                cumulative_savings=cumulative,
-                investments_value=inv_total,
-                net_worth=cumulative + inv_total,
+                cumulative_contribution=cumulative_contribution,
+                cumulative_current_value=cumulative_value,
             )
         )
         cursor = cursor + relativedelta(months=1)
