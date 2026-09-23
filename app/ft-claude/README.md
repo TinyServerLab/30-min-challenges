@@ -148,3 +148,6 @@ finance-tracker/
 ├── cloudflare/          # ingress config snippet
 └── docs/architecture.md
 ```
+
+## How-to Live demo
+Refer https://youtu.be/pdU-Lj9ABnA
