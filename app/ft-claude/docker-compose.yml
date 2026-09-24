@@ -13,9 +13,6 @@ services:
       dockerfile: backend/Dockerfile
     container_name: finance-app
     restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-finance_db_user}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@${POSTGRES_REMOTE_HOST:-db}:5432/${POSTGRES_DB:-finance_db}
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
