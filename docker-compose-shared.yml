@@ -1,0 +1,67 @@
+# Household Ledger — Raspberry Pi 5 stack
+# All images are multi-arch with native linux/arm64 builds (no emulation).
+# Deploy / update:  docker compose up -d --build
+
+name: ledger
+
+services:
+  app:
+    build:
+      context: ./backend
+    image: ledger-app:local
+    container_name: ledger-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-ledger_db_user}:${POSTGRES_PASSWORD}@${POSTGRES_REMOTE_HOST:-db}:5432/${POSTGRES_DB:-ledger_db}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      JWT_EXPIRY_DAYS: ${JWT_EXPIRY_DAYS:-7}
+      JWT_REFRESH_AFTER_HOURS: ${JWT_REFRESH_AFTER_HOURS:-12}
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      APP_NAME: ${APP_NAME:-Household Ledger}
+      CURRENCY_SYMBOL: ${CURRENCY_SYMBOL:-₹}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      ADMIN_NAME: ${ADMIN_NAME:-Admin}
+      TZ: ${TZ:-Asia/Kolkata}
+    ports:
+      # so nothing needs to be exposed on the LAN at all.
+      - "127.0.0.1:${APP_PORT:-8085}:8000"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging: *log
+
+  backup:
+    build:
+      context: ./backup
+    image: ledger-backup:local
+    container_name: ledger-backup
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGPORT: "5432"
+      PGDATABASE: ${POSTGRES_DB:-ledger}
+      PGUSER: ${POSTGRES_USER:-ledger}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      BACKUP_CRON: ${BACKUP_CRON:-30 2 * * *}   # 02:30 every night
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-30}
+      RCLONE_REMOTE: ${RCLONE_REMOTE:-}          # e.g. "gdrive:pi-backups/ledger" — optional offsite copy
+      TZ: ${TZ:-Asia/Kolkata}
+    volumes:
+      - ./backups:/backups
+      - ./backup/rclone:/root/.config/rclone:ro   # only needed if RCLONE_REMOTE is set
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    logging: *log
+
+volumes:
+  pgdata:

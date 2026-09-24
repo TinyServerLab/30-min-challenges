@@ -6,35 +6,7 @@ version: "3.9"
 # forwarding, no ports exposed on the LAN interface.
 
 services:
-  db:
-    image: postgres:16-alpine
-    container_name: finance-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-finance}
-      POSTGRES_USER: ${POSTGRES_USER:-finance_app}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
-    volumes:
-      - db_data:/var/lib/postgresql/data
-      - ./backend/scripts/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
-    ports:
-      # Host port 5434 as requested, bound to localhost only.
-      - "127.0.0.1:5434:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-finance_app} -d ${POSTGRES_DB:-finance}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    deploy:
-      resources:
-        limits:
-          memory: 400M
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-
+  ### Shared DB servers used, if required to dedicated db rename docker-compose-standalone.yml to docker-compose.yml
   app:
     build:
       context: .
@@ -45,7 +17,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-finance_app}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-finance}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-finance_db_user}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@${POSTGRES_REMOTE_HOST:-db}:5432/${POSTGRES_DB:-finance_db}
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
       JWT_ACCESS_MINUTES: ${JWT_ACCESS_MINUTES:-30}
       JWT_REFRESH_DAYS: ${JWT_REFRESH_DAYS:-7}
@@ -65,34 +37,10 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  backup:
-    build:
-      context: ./backup
-    container_name: finance-backup
-    restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-finance}
-      POSTGRES_USER: ${POSTGRES_USER:-finance_app}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
-      PGHOST: db
-      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
-      # Optional offsite copy — leave empty to keep backups local-only.
-      RCLONE_REMOTE: ${RCLONE_REMOTE:-}
-    volumes:
-      - ./backups:/backups
-    deploy:
-      resources:
-        limits:
-          memory: 100M
-    logging:
-      driver: json-file
-      options:
-        max-size: "5m"
-        max-file: "2"
-
 volumes:
   db_data:
   app_uploads:
+
+networks:
+  shared-db: { external: true }
+  shared-web: { external: true }
