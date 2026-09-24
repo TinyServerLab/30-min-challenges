@@ -1,5 +1,3 @@
-version: "3.9"
-
 # Personal Finance Tracker — Raspberry Pi 5 / Docker Compose stack
 # All services bind to 127.0.0.1 only. External access is via the host-level
 # cloudflared tunnel (see cloudflare/config.yml.example) — no router port
@@ -14,7 +12,7 @@ services:
     container_name: finance-app
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-finance_db_user}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@${POSTGRES_REMOTE_HOST:-db}:5432/${POSTGRES_DB:-finance_db}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-finance_db_user}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@${POSTGRES_REMOTE_HOST:-shared-postgres}:5432/${POSTGRES_DB:-finance_db}
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
       JWT_ACCESS_MINUTES: ${JWT_ACCESS_MINUTES:-30}
       JWT_REFRESH_DAYS: ${JWT_REFRESH_DAYS:-7}
@@ -23,7 +21,10 @@ services:
     volumes:
       - app_uploads:/app/uploads
     ports:
-      - "127.0.0.1:8090:8000"
+      - "127.0.0.1:8090:8000"   # direct debug access only; public traffic comes via shared-caddy
+    networks:
+      - shared-db    # reach shared-postgres:5432
+      - shared-web   # reachable by shared-caddy as finance-app:8000
     deploy:
       resources:
         limits:
@@ -38,6 +39,9 @@ volumes:
   db_data:
   app_uploads:
 
+# Created by Pi5Lab/shared-infra (postgres and caddy stacks) — start those first.
 networks:
-  shared-db: { external: true }
-  shared-web: { external: true }
+  shared-db:
+    external: true
+  shared-web:
+    external: true
