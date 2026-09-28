@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { BarChart3, Boxes, Home, LogOut, Plus, Settings } from 'lucide-react'
-import { useAuth } from '../lib/auth'
+import { useAuth } from '../core/auth'
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: Home, end: true },

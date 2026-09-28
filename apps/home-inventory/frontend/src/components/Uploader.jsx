@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { Camera, FileText, Upload } from 'lucide-react'
-import { api } from '../lib/api'
+import { api } from '../core/api'
 import { Spinner, useToast } from './ui'
 
 /** Upload one or more files. Calls onUploaded(result) per file.

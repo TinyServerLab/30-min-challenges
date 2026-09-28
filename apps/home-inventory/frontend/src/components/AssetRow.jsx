@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
-import { thumbUrl } from '../lib/api'
-import { fmtDate, money } from '../lib/format'
+import { thumbUrl } from '../core/api'
+import { fmtDate, money } from '../core/format'
 import { CategoryIcon, WarrantyBadge } from './ui'
 
 export default function AssetRow({ a, showExpiry = true }) {

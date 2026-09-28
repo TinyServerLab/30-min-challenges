@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Lock } from 'lucide-react'
-import { useAuth } from '../lib/auth'
+import { useAuth } from '../core/auth'
 
 export default function Login() {
   const { user, login } = useAuth()

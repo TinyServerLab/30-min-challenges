@@ -3,7 +3,7 @@ import {
   AirVent, Armchair, Box, Car, CheckCircle2, Laptop, Loader2, Microwave, ShieldAlert, ShieldCheck,
   ShieldOff, ShieldX, Smartphone, Tv, WashingMachine, Wind, Wrench, X,
 } from 'lucide-react'
-import { daysText } from '../lib/format'
+import { daysText } from '../core/format'
 
 export const ICONS = {
   smartphone: Smartphone, laptop: Laptop, tv: Tv, microwave: Microwave, washing: WashingMachine,

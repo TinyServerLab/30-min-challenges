@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Download, ExternalLink, FileText, Trash2 } from 'lucide-react'
-import { api, fileUrl, thumbUrl } from '../lib/api'
-import { fileSize, KIND_LABEL } from '../lib/format'
+import { api, fileUrl, thumbUrl } from '../core/api'
+import { fileSize, KIND_LABEL } from '../core/format'
 import { Modal, useToast } from './ui'
 
 export default function Attachments({ items, onChange, editable = true }) {

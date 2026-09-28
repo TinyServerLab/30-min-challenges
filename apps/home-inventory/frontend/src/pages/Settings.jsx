@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Bell, KeyRound, Pencil, Plus, Tags, Trash2, User, Users } from 'lucide-react'
-import { api } from '../lib/api'
-import { useAuth } from '../lib/auth'
-import { fmtDate } from '../lib/format'
+import { api } from '../core/api'
+import { useAuth } from '../core/auth'
+import { fmtDate } from '../core/format'
 import { CategoryIcon, Field, ICONS, Modal, useToast } from '../components/ui'
 
 // validated categorical palette + neutral
