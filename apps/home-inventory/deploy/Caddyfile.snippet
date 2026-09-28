@@ -1,0 +1,14 @@
+# Add inside your EXISTING Caddyfile site block for home.tinyserverlab.in, then: docker exec caddy caddy reload --config /etc/caddy/Caddyfile
+#
+# Use `handle` (NOT `handle_path`): the app expects the /inventory prefix to be passed through.
+
+home.tinyserverlab.in {
+	# ... your other routes ...
+
+	handle /inventory* {
+		request_body {
+			max_size 25MB
+		}
+		reverse_proxy home-inventory:8000
+	}
+}
