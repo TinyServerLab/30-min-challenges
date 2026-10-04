@@ -65,9 +65,9 @@ docker exec caddy caddy reload --config /etc/caddy/Caddyfile
 Add them under **Settings → Family members**, or from the command line:
 
 ```bash
-docker compose exec app python -m app.cli create-user --email amma@example.com --name "Amma" --username amma
-docker compose exec app python -m app.cli create-user --email me@example.com --name Sathya --admin
-docker compose exec app python -m app.cli reset-password --email amma@example.com
+docker compose exec app python -m app.cli create-user --email joe@example.com --name "Joe" --username Joe
+docker compose exec app python -m app.cli create-user --email me@example.com --name TSL --admin
+docker compose exec app python -m app.cli reset-password --email joe@example.com
 docker compose exec app python -m app.cli list-users
 ```
 
