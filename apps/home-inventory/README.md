@@ -1,6 +1,6 @@
 # Home Asset + Warranty
 
-A self-hosted household app for purchases, invoices, warranties and reminders. It runs on a Raspberry Pi 5 with Docker, alongside your **existing shared PostgreSQL and Caddy**. It serves from `https://home.tinyserverlab.in/inventory`.
+A self-hosted household app for purchases, invoices, warranties and reminders. It runs on a Raspberry Pi 5 with Docker, alongside your **existing shared PostgreSQL and Caddy**. It serves from `https://apps.tinyserverlab.in/inventory`.
 
 ```
 Photo / PDF of invoice ─► OCR suggests name, brand, model, serial, store, invoice no., date, total, warranty
@@ -58,7 +58,7 @@ docker compose logs -f app          # expect "Migrations applied: ['0001_initial
 docker exec caddy caddy reload --config /etc/caddy/Caddyfile
 ```
 
-**5. First sign-in.** Open `https://home.tinyserverlab.in/inventory`, sign in with `ADMIN_EMAIL` / `ADMIN_PASSWORD`, then **delete `ADMIN_PASSWORD` from `.env`**. It is only used when the users table is empty.
+**5. First sign-in.** Open `https://apps.tinyserverlab.in/inventory`, sign in with `ADMIN_EMAIL` / `ADMIN_PASSWORD`, then **delete `ADMIN_PASSWORD` from `.env`**. It is only used when the users table is empty.
 
 ### Adding family members (no public sign-up)
 
