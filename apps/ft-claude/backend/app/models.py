@@ -30,6 +30,28 @@ class InvestmentKind(str, enum.Enum):
     other = "other"
 
 
+class BillingCycle(str, enum.Enum):
+    weekly = "weekly"
+    monthly = "monthly"
+    quarterly = "quarterly"
+    yearly = "yearly"
+
+
+class SubscriptionStatus(str, enum.Enum):
+    active = "active"
+    paused = "paused"
+    cancelled = "cancelled"
+
+
+class SubscriptionUsage(str, enum.Enum):
+    """How much the household actually gets out of a subscription — drives
+    the savings plan's cancel suggestions (rarely/unused)."""
+    essential = "essential"
+    regular = "regular"
+    rarely = "rarely"
+    unused = "unused"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -52,6 +74,9 @@ class Category(Base):
     type = Column(Enum(TxnType, name="txn_type"), nullable=False)
     icon = Column(String(50), default="")
     color = Column(String(20), default="#64748b")
+    # Non-essential (discretionary) expense categories are what the savings
+    # plan suggests trimming; essentials are reported but never targeted.
+    essential = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     transactions = relationship("Transaction", back_populates="category")
@@ -104,3 +129,49 @@ class Investment(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     user = relationship("User", back_populates="investments")
+
+
+class Subscription(Base):
+    __tablename__ = "subscriptions"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    name = Column(String(150), nullable=False)
+    amount = Column(Numeric(14, 2), nullable=False)
+    billing_cycle = Column(Enum(BillingCycle, name="billing_cycle"), nullable=False, default=BillingCycle.monthly)
+    next_due_date = Column(Date, nullable=False)
+    category_id = Column(Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=True)
+    source_id = Column(Integer, ForeignKey("payment_sources.id", ondelete="SET NULL"), nullable=True)
+    status = Column(Enum(SubscriptionStatus, name="subscription_status"), nullable=False, default=SubscriptionStatus.active)
+    usage = Column(Enum(SubscriptionUsage, name="subscription_usage"), nullable=False, default=SubscriptionUsage.regular)
+    note = Column(Text, default="")
+    cancelled_on = Column(Date, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    category = relationship("Category")
+    source = relationship("PaymentSource")
+
+    @property
+    def monthly_cost(self):
+        from app.utils.billing import monthly_cost
+        return monthly_cost(self.amount, self.billing_cycle)
+
+    @property
+    def yearly_cost(self):
+        from app.utils.billing import yearly_cost
+        return yearly_cost(self.amount, self.billing_cycle)
+
+
+class SpendingCap(Base):
+    """A monthly limit on one expense category, adopted from the savings
+    plan. Household-wide, like categories themselves."""
+    __tablename__ = "spending_caps"
+
+    id = Column(Integer, primary_key=True)
+    category_id = Column(Integer, ForeignKey("categories.id", ondelete="CASCADE"), nullable=False, unique=True)
+    monthly_limit = Column(Numeric(14, 2), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    category = relationship("Category")

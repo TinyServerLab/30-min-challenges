@@ -103,6 +103,22 @@ This is the one-command update path — Compose rebuilds only what
 changed and restarts in place. The `db` volume (and your data) is
 untouched by rebuilds.
 
+### Schema changes for an existing database
+
+`init.sql` only runs against an empty data volume, so a database created
+before a schema change needs the matching file from
+`backend/scripts/migrations/` applied once (each is safe to re-run):
+
+```bash
+docker exec -i shared-postgres psql -U finance_db_user -d finance_db \
+  < backend/scripts/migrations/001_subscriptions_savings.sql
+```
+
+- `001_subscriptions_savings.sql` — Subscriptions page and Savings Plan:
+  `subscriptions` and `spending_caps` tables, an `essential` flag on
+  categories (Dining Out / Entertainment / Shopping start as
+  discretionary), and a starter "Subscriptions" category.
+
 ## Backups
 
 - Nightly, automatic, no setup required: the `backup` container dumps

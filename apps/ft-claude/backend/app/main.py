@@ -6,7 +6,10 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
 from app.config import settings
-from app.routers import auth, categories, sources, transactions, investments, dashboard, reports
+from app.routers import (
+    auth, categories, sources, transactions, investments, dashboard, reports,
+    subscriptions, savings,
+)
 
 app = FastAPI(title="Personal Finance Tracker", version="1.0.0")
 
@@ -26,6 +29,8 @@ app.include_router(transactions.router, prefix="/api")
 app.include_router(investments.router, prefix="/api")
 app.include_router(dashboard.router, prefix="/api")
 app.include_router(reports.router, prefix="/api")
+app.include_router(subscriptions.router, prefix="/api")
+app.include_router(savings.router, prefix="/api")
 
 
 @app.get("/api/health")

@@ -9,6 +9,8 @@ import Categories from "./pages/Categories.jsx";
 import Sources from "./pages/Sources.jsx";
 import Reports from "./pages/Reports.jsx";
 import Investments from "./pages/Investments.jsx";
+import Subscriptions from "./pages/Subscriptions.jsx";
+import SavingsPlan from "./pages/SavingsPlan.jsx";
 
 function RequireAuth({ children }) {
   if (!authApi.isLoggedIn()) return <Navigate to="/login" replace />;
@@ -33,6 +35,8 @@ export default function App() {
         <Route path="sources" element={<Sources />} />
         <Route path="reports" element={<Reports />} />
         <Route path="investments" element={<Investments />} />
+        <Route path="subscriptions" element={<Subscriptions />} />
+        <Route path="savings" element={<SavingsPlan />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

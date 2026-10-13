@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS categories (
     type       txn_type NOT NULL,
     icon       VARCHAR(50)  DEFAULT '',
     color      VARCHAR(20)  DEFAULT '#64748b',
+    essential  BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE (name, type)
 );
@@ -67,22 +68,55 @@ CREATE TABLE IF NOT EXISTS investments (
 
 CREATE INDEX IF NOT EXISTS idx_investments_user ON investments (user_id);
 
+CREATE TYPE billing_cycle AS ENUM ('weekly', 'monthly', 'quarterly', 'yearly');
+CREATE TYPE subscription_status AS ENUM ('active', 'paused', 'cancelled');
+CREATE TYPE subscription_usage AS ENUM ('essential', 'regular', 'rarely', 'unused');
+
+CREATE TABLE IF NOT EXISTS subscriptions (
+    id             SERIAL PRIMARY KEY,
+    user_id        INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name           VARCHAR(150) NOT NULL,
+    amount         NUMERIC(14, 2) NOT NULL CHECK (amount > 0),
+    billing_cycle  billing_cycle NOT NULL DEFAULT 'monthly',
+    next_due_date  DATE NOT NULL,
+    category_id    INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+    source_id      INTEGER REFERENCES payment_sources(id) ON DELETE SET NULL,
+    status         subscription_status NOT NULL DEFAULT 'active',
+    usage          subscription_usage NOT NULL DEFAULT 'regular',
+    note           TEXT DEFAULT '',
+    cancelled_on   DATE,
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_subscriptions_status_due ON subscriptions (status, next_due_date);
+
+-- Monthly limits adopted from the savings plan, one per expense category.
+CREATE TABLE IF NOT EXISTS spending_caps (
+    id             SERIAL PRIMARY KEY,
+    category_id    INTEGER NOT NULL UNIQUE REFERENCES categories(id) ON DELETE CASCADE,
+    monthly_limit  NUMERIC(14, 2) NOT NULL CHECK (monthly_limit > 0),
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- Starter categories/sources so the app isn't empty on first login.
 -- Household members can edit or delete these freely afterward.
-INSERT INTO categories (name, type, icon, color) VALUES
-    ('Groceries', 'expense', 'cart', '#f97316'),
-    ('Rent', 'expense', 'home', '#ef4444'),
-    ('Utilities', 'expense', 'bolt', '#eab308'),
-    ('Dining Out', 'expense', 'utensils', '#f59e0b'),
-    ('Transport', 'expense', 'car', '#3b82f6'),
-    ('Healthcare', 'expense', 'pill', '#ec4899'),
-    ('Entertainment', 'expense', 'film', '#a855f7'),
-    ('Shopping', 'expense', 'bag', '#14b8a6'),
-    ('Other Expense', 'expense', 'box', '#64748b'),
-    ('Salary', 'income', 'briefcase', '#22c55e'),
-    ('Freelance', 'income', 'laptop', '#06b6d4'),
-    ('Interest', 'income', 'bank', '#84cc16'),
-    ('Other Income', 'income', 'plus', '#10b981')
+INSERT INTO categories (name, type, icon, color, essential) VALUES
+    ('Groceries', 'expense', 'cart', '#f97316', TRUE),
+    ('Rent', 'expense', 'home', '#ef4444', TRUE),
+    ('Utilities', 'expense', 'bolt', '#eab308', TRUE),
+    ('Dining Out', 'expense', 'utensils', '#f59e0b', FALSE),
+    ('Transport', 'expense', 'car', '#3b82f6', TRUE),
+    ('Healthcare', 'expense', 'pill', '#ec4899', TRUE),
+    ('Entertainment', 'expense', 'film', '#a855f7', FALSE),
+    ('Shopping', 'expense', 'bag', '#14b8a6', FALSE),
+    ('Subscriptions', 'expense', 'repeat', '#8b5cf6', FALSE),
+    ('Other Expense', 'expense', 'box', '#64748b', TRUE),
+    ('Salary', 'income', 'briefcase', '#22c55e', TRUE),
+    ('Freelance', 'income', 'laptop', '#06b6d4', TRUE),
+    ('Interest', 'income', 'bank', '#84cc16', TRUE),
+    ('Other Income', 'income', 'plus', '#10b981', TRUE)
 ON CONFLICT (name, type) DO NOTHING;
 
 INSERT INTO payment_sources (name, kind, running_balance) VALUES

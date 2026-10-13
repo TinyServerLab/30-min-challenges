@@ -5,6 +5,8 @@ import { authApi } from "../api/client.js";
 const links = [
   { to: "/", label: "Dashboard", end: true },
   { to: "/transactions", label: "Transactions" },
+  { to: "/subscriptions", label: "Subscriptions" },
+  { to: "/savings", label: "Savings Plan" },
   { to: "/categories", label: "Categories" },
   { to: "/sources", label: "Payment Sources" },
   { to: "/investments", label: "Investments" },

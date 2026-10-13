@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { api } from "../api/client.js";
 
-const empty = { name: "", type: "expense", icon: "", color: "#64748b" };
+const empty = { name: "", type: "expense", icon: "", color: "#64748b", essential: true };
 
 export default function Categories() {
   const [items, setItems] = useState([]);
@@ -43,7 +43,7 @@ export default function Categories() {
       <h2 className="text-xl font-semibold">Categories</h2>
       {error && <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded px-3 py-2">{error}</div>}
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-4 grid grid-cols-2 sm:grid-cols-5 gap-3 items-end">
+      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-4 grid grid-cols-2 sm:grid-cols-6 gap-3 items-end">
         <div>
           <label className="block text-xs text-slate-500 mb-1">Name</label>
           <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -67,6 +67,11 @@ export default function Categories() {
           <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })}
             className="w-full h-9 border border-slate-300 rounded" />
         </div>
+        <label className="flex items-center gap-2 text-sm pb-1.5" title="Non-essential expense categories are what the savings plan suggests trimming">
+          <input type="checkbox" checked={form.essential} disabled={form.type !== "expense"}
+            onChange={(e) => setForm({ ...form, essential: e.target.checked })} />
+          Essential
+        </label>
         <div className="flex gap-2">
           <button type="submit" className="bg-slate-900 text-white rounded px-4 py-1.5 text-sm">{editingId ? "Save" : "Add"}</button>
           {editingId && (
@@ -84,6 +89,9 @@ export default function Categories() {
               <span className="w-3 h-3 rounded-full" style={{ backgroundColor: c.color }} />
               <span className="text-sm">{c.icon} {c.name}</span>
               <span className="text-xs text-slate-400">{c.type}</span>
+              {c.type === "expense" && !c.essential && (
+                <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded px-1.5">discretionary</span>
+              )}
             </div>
             <div className="flex gap-3 text-xs">
               <button onClick={() => { setEditingId(c.id); setForm(c); }} className="text-slate-500 hover:text-slate-900">Edit</button>
