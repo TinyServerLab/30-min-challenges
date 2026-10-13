@@ -5,7 +5,7 @@
 # - Write the site address the same way as your other sites. Behind Cloudflare Tunnel that is usually
 #   http://<host> so Caddy does not try to issue certificates or redirect to HTTPS.
 
-http://home.{$DOMAIN:tinyserverlab.in} {
+http://apps.{$DOMAIN:tinyserverlab.in} {
 	handle /inventory* {
 		request_body {
 			max_size 25MB

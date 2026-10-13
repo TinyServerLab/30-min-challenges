@@ -19,7 +19,7 @@ class Settings(BaseSettings):
 
     # --- hosting ---
     base_path: str = "/inventory"            # app is served under this prefix
-    public_url: str = "https://home.tinyserverlab.in/inventory"  # used in reminder links
+    public_url: str = "https://apps.tinyserverlab.in/inventory"  # used in reminder links
     enable_api_docs: bool = False
 
     # --- auth ---

@@ -163,7 +163,7 @@ with TestClient(application, base_url="http://testserver") as c:
 
     # ---- long digest splits under Telegram's 4096 limit
     big = notify.Message(title="T", lines=[notify.Line(label="Item %d " % i + "x" * 80, detail="ends soon",
-                                                        url="https://home.tinyserverlab.in/inventory/assets/1")
+                                                        url="https://apps.tinyserverlab.in/inventory/assets/1")
                                            for i in range(80)])
     sent.clear()
     notify.send_telegram({"bot_token": TOKEN, "chat_id": "1"}, big)
