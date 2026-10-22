@@ -3,7 +3,7 @@
 ## Inventory
 | Application | Path | What it is | Stack | Database | Access |
 | ----- | ------ | ----- | ----- | ----- | ----- |
-| Finance tracker | ./apps/ft-claude | Household income, expenses, investments, subscriptions and savings plan | FastAPI + React (Vite, Tailwind, Recharts) | Shared Postgres (`shared-postgres`) | `127.0.0.1:8090`, public via shared Caddy |
+| Finance tracker | ./apps/ft-claude | Household income, expenses, investments, subscriptions and savings plan | FastAPI + React (Vite, Tailwind, Recharts) | Shared Postgres (`shared-postgres`) | `https://apps.tinyserverlab.in/finance` via shared Caddy (`127.0.0.1:8090` direct) |
 | Home Inventory | ./apps/home-inventory | Purchases, invoices (OCR), warranties and expiry reminders | FastAPI + React, Tesseract OCR, APScheduler | Shared Postgres (`shared-postgres`) | `https://apps.tinyserverlab.in/inventory` via shared Caddy |
 | Personal finance tracker (ChatGPT build) | ./apps/pft-chatgpt | Alternative household finance tracker | FastAPI + server-rendered templates | Own Postgres container (`127.0.0.1:5434`) | `127.0.0.1:8080`, public via Cloudflare Tunnel |
 | Household Ledger *(archived)* | ./archive/expense-manager | Earlier finance tracker, formerly at the repo root; kept for reference, not deployed | FastAPI + static JS (Chart.js) | Own Postgres container | — |
@@ -15,6 +15,18 @@ shared Caddy reverse proxy. See each app's own README for setup.
 ## Changelog
 
 Newest first. Append new entries at the top of this list.
+
+### 2026-10-22 — Finance tracker: works behind Caddy at /finance
+- The app assumed it was served at the site root, so through
+  `https://apps.tinyserverlab.in/finance` its scripts and API calls went to
+  `/assets/…` and `/api/…` outside the `/finance*` route, and the page was blank.
+- New `BASE_PATH` setting (default `/finance` in `docker-compose.yml`). The
+  frontend uses relative asset URLs and takes its API and router prefix
+  from a `<base>` tag filled in by the backend, so the same image works at
+  `/finance` or at the root. Same approach as Home Inventory.
+- **Upgrade step:** `docker compose up -d --build` in `apps/ft-claude`. Keep
+  Caddy's `handle /finance*` (not `handle_path`). Log in again on the new
+  hostname, because saved logins are kept per site.
 
 ### 2026-10-13 — Home Inventory: moved to the shared apps hostname
 - Now served at `https://apps.tinyserverlab.in/inventory` (was

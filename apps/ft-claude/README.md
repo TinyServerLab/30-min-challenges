@@ -92,6 +92,25 @@ For the second layer of defense, add a Cloudflare Access policy
 restricting that hostname to your household's email addresses (also
 documented in the same file).
 
+### Serving under a path (shared Caddy)
+
+To serve the app at a sub-path such as `https://apps.tinyserverlab.in/finance`,
+set `BASE_PATH=/finance` (the default in `docker-compose.yml`) and forward
+the prefix to the container **unchanged**: use `handle`, not `handle_path`:
+
+```caddy
+handle /finance* {
+	request_body {
+		max_size 25MB
+	}
+	reverse_proxy finance-app:8000
+}
+```
+
+The same image also works at a site root: leave `BASE_PATH` empty. With a
+prefix set, a request to `/` redirects to `/finance/`, so a direct tunnel to
+the container keeps working.
+
 ## 6. Updating later
 
 ```bash

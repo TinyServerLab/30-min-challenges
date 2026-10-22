@@ -17,6 +17,9 @@ services:
       JWT_ACCESS_MINUTES: ${JWT_ACCESS_MINUTES:-30}
       JWT_REFRESH_DAYS: ${JWT_REFRESH_DAYS:-7}
       CORS_ORIGINS: ${CORS_ORIGINS:-https://finance.example.com}
+      # Served at https://apps.tinyserverlab.in/finance via shared-caddy
+      # (`handle /finance* { reverse_proxy finance-app:8000 }`, prefix kept).
+      BASE_PATH: ${BASE_PATH:-/finance}
       TZ: ${TZ:-Asia/Kolkata}
     volumes:
       - app_uploads:/app/uploads

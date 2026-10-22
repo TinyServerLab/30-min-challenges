@@ -1,5 +1,9 @@
 const TOKENS_KEY = "finance_tokens";
 
+// "/finance" behind the Caddy path route, "" at the site root — taken from
+// the <base href> the backend writes into index.html.
+export const BASENAME = new URL(".", document.baseURI).pathname.replace(/\/$/, "");
+
 function getTokens() {
   const raw = localStorage.getItem(TOKENS_KEY);
   return raw ? JSON.parse(raw) : null;
@@ -16,7 +20,7 @@ function clearTokens() {
 async function refreshTokens() {
   const tokens = getTokens();
   if (!tokens?.refresh_token) throw new Error("no refresh token");
-  const res = await fetch("/api/auth/refresh", {
+  const res = await fetch(`${BASENAME}/api/auth/refresh`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refresh_token: tokens.refresh_token }),
@@ -37,7 +41,7 @@ async function request(path, { method = "GET", body, isForm = false, raw = false
     const headers = {};
     if (!isForm) headers["Content-Type"] = "application/json";
     if (tokens?.access_token) headers["Authorization"] = `Bearer ${tokens.access_token}`;
-    return fetch(`/api${path}`, {
+    return fetch(`${BASENAME}/api${path}`, {
       method,
       headers,
       body: body ? (isForm ? body : JSON.stringify(body)) : undefined,
@@ -52,7 +56,7 @@ async function request(path, { method = "GET", body, isForm = false, raw = false
       res = await doFetch();
     } catch {
       clearTokens();
-      window.location.href = "/login";
+      window.location.href = `${BASENAME}/login`;
       throw new Error("Session expired");
     }
   }
@@ -84,7 +88,7 @@ export const api = {
 
 export const authApi = {
   async login(email, password) {
-    const res = await fetch("/api/auth/login", {
+    const res = await fetch(`${BASENAME}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
