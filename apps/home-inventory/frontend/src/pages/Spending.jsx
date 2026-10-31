@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { api } from '../core/api'
+import { useAuth } from '../core/auth'
 import { compactMoney, money, MONTHS } from '../core/format'
 import { PageLoader, useToast } from '../components/ui'
 import AssetRow from '../components/AssetRow'
@@ -9,7 +10,7 @@ const C_PURCHASE = '#2a78d6'   // categorical slot 1
 const C_SERVICE = '#eb6834'    // categorical slot 2
 const AXIS = { fontSize: 11, fill: '#64748b' }
 
-function ChartTip({ active, payload, label }) {
+function ChartTip({ active, payload, label, currency }) {
   if (!active || !payload?.length) return null
   const total = payload.reduce((s, p) => s + Number(p.value || 0), 0)
   return (
@@ -18,10 +19,10 @@ function ChartTip({ active, payload, label }) {
       {payload.map((p) => (
         <div key={p.dataKey} className="flex items-center gap-2 text-slate-600">
           <span className="w-2 h-2 rounded-sm" style={{ background: p.color }} />
-          <span className="flex-1">{p.name}</span><span className="tabular-nums text-slate-800">{money(p.value)}</span>
+          <span className="flex-1">{p.name}</span><span className="tabular-nums text-slate-800">{money(p.value, currency)}</span>
         </div>
       ))}
-      {payload.length > 1 && <div className="border-t border-slate-100 mt-1 pt-1 flex justify-between text-slate-800 font-medium"><span>Total</span><span className="tabular-nums">{money(total)}</span></div>}
+      {payload.length > 1 && <div className="border-t border-slate-100 mt-1 pt-1 flex justify-between text-slate-800 font-medium"><span>Total</span><span className="tabular-nums">{money(total, currency)}</span></div>}
     </div>
   )
 }
@@ -31,6 +32,7 @@ export default function Spending() {
   const [d, setD] = useState(null)
   const [view, setView] = useState('chart')
   const toast = useToast()
+  const { user } = useAuth()
 
   useEffect(() => { api('reports/spending', { params: { year } }).then(setD).catch((e) => toast(e.message, 'error')) }, [year, toast])
   if (!d) return <PageLoader />
@@ -52,7 +54,7 @@ export default function Spending() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[['Total spent', d.totals.total], ['Purchases', d.totals.purchases], ['Repairs & service', d.totals.services]].map(([l, v]) => (
-          <div key={l} className="card p-4"><div className="text-xs text-slate-500">{l}</div><div className="text-2xl font-semibold tabular-nums mt-1">{money(v)}</div></div>
+          <div key={l} className="card p-4"><div className="text-xs text-slate-500">{l}</div><div className="text-2xl font-semibold tabular-nums mt-1">{money(v, user.currency)}</div></div>
         ))}
         <div className="card p-4"><div className="text-xs text-slate-500">Items bought</div><div className="text-2xl font-semibold tabular-nums mt-1">{d.totals.count}</div></div>
       </div>
@@ -76,8 +78,8 @@ export default function Spending() {
               <BarChart data={monthly} margin={{ top: 4, right: 4, left: 0, bottom: 0 }} barCategoryGap="28%">
                 <CartesianGrid vertical={false} stroke="#e2e8f0" strokeDasharray="0" />
                 <XAxis dataKey="label" tick={AXIS} axisLine={false} tickLine={false} />
-                <YAxis tick={AXIS} axisLine={false} tickLine={false} width={48} tickFormatter={compactMoney} />
-                <Tooltip content={<ChartTip />} cursor={{ fill: '#f1f5f9' }} />
+                <YAxis tick={AXIS} axisLine={false} tickLine={false} width={48} tickFormatter={(v) => compactMoney(v, user.currency)} />
+                <Tooltip content={<ChartTip currency={user.currency} />} cursor={{ fill: '#f1f5f9' }} />
                 <Bar dataKey="purchases" name="Purchases" stackId="a" fill={C_PURCHASE} stroke="#fff" strokeWidth={2} />
                 <Bar dataKey="services" name="Repairs & service" stackId="a" fill={C_SERVICE} stroke="#fff" strokeWidth={2} radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -89,7 +91,7 @@ export default function Spending() {
               <thead className="text-xs text-slate-500 text-left"><tr><th className="py-1.5 font-medium">Month</th><th className="py-1.5 font-medium text-right">Purchases</th><th className="py-1.5 font-medium text-right">Repairs</th><th className="py-1.5 font-medium text-right">Total</th></tr></thead>
               <tbody className="divide-y divide-slate-100 tabular-nums">
                 {monthly.map((m) => (
-                  <tr key={m.label}><td className="py-1.5">{m.label}</td><td className="text-right">{money(m.purchases)}</td><td className="text-right">{money(m.services)}</td><td className="text-right font-medium">{money(m.purchases + m.services)}</td></tr>
+                  <tr key={m.label}><td className="py-1.5">{m.label}</td><td className="text-right">{money(m.purchases, user.currency)}</td><td className="text-right">{money(m.services, user.currency)}</td><td className="text-right font-medium">{money(m.purchases + m.services, user.currency)}</td></tr>
                 ))}
               </tbody>
             </table>
@@ -106,7 +108,7 @@ export default function Spending() {
                 <li key={c.name}>
                   <div className="flex items-center justify-between text-sm mb-1">
                     <span className="text-slate-700">{c.name} <span className="text-slate-400 text-xs">· {c.count}</span></span>
-                    <span className="font-medium tabular-nums">{money(c.value)}</span>
+                    <span className="font-medium tabular-nums">{money(c.value, user.currency)}</span>
                   </div>
                   <div className="h-2 rounded-full bg-slate-100"><div className="h-2 rounded-full" style={{ width: `${(Number(c.value) / catMax) * 100}%`, background: c.color }} /></div>
                 </li>
@@ -121,7 +123,7 @@ export default function Spending() {
             <table className="w-full text-sm">
               <tbody className="divide-y divide-slate-100">
                 {d.by_vendor.map((v) => (
-                  <tr key={v.name}><td className="py-2 text-slate-700">{v.name}</td><td className="py-2 text-right text-slate-400 text-xs">{v.count} item{v.count > 1 ? 's' : ''}</td><td className="py-2 text-right font-medium tabular-nums">{money(v.value)}</td></tr>
+                  <tr key={v.name}><td className="py-2 text-slate-700">{v.name}</td><td className="py-2 text-right text-slate-400 text-xs">{v.count} item{v.count > 1 ? 's' : ''}</td><td className="py-2 text-right font-medium tabular-nums">{money(v.value, user.currency)}</td></tr>
                 ))}
               </tbody>
             </table>
@@ -138,8 +140,8 @@ export default function Spending() {
                 <BarChart data={d.yearly.map((y) => ({ label: String(y.year), purchases: Number(y.value) }))} barCategoryGap="30%">
                   <CartesianGrid vertical={false} stroke="#e2e8f0" />
                   <XAxis dataKey="label" tick={AXIS} axisLine={false} tickLine={false} />
-                  <YAxis tick={AXIS} axisLine={false} tickLine={false} width={48} tickFormatter={compactMoney} />
-                  <Tooltip content={<ChartTip />} cursor={{ fill: '#f1f5f9' }} />
+                  <YAxis tick={AXIS} axisLine={false} tickLine={false} width={48} tickFormatter={(v) => compactMoney(v, user.currency)} />
+                  <Tooltip content={<ChartTip currency={user.currency} />} cursor={{ fill: '#f1f5f9' }} />
                   <Bar dataKey="purchases" name="Purchases" fill={C_PURCHASE} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>

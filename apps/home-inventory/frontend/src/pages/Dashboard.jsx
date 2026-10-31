@@ -43,9 +43,9 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard label="Assets tracked" value={c.assets} icon={Boxes} tone="brand" onClick={() => nav('/assets')}
-          sub={`${compactMoney(d.value.total)} total value`} />
+          sub={`${compactMoney(d.value.total, user.currency)} total value`} />
         <StatCard label="Under warranty" value={c.under_warranty} icon={ShieldCheck} tone="green" onClick={() => nav('/assets?warranty=active')}
-          sub={`${compactMoney(d.value.covered)} covered`} />
+          sub={`${compactMoney(d.value.covered, user.currency)} covered`} />
         <StatCard label={`Expiring ≤ ${d.expiring_window_days} days`} value={c.expiring_soon} icon={ShieldAlert} tone="amber"
           onClick={() => nav('/assets?warranty=expiring')} sub={c.expiring_soon ? 'Check these soon' : 'Nothing urgent'} />
         <StatCard label="Out of warranty" value={c.expired} icon={ShieldX} tone="red" onClick={() => nav('/assets?warranty=expired')}
@@ -85,7 +85,7 @@ export default function Dashboard() {
                       innerRadius={52} outerRadius={80} paddingAngle={2} stroke="#fff" strokeWidth={2} isAnimationActive={false}>
                       {d.by_category.map((x) => <Cell key={x.name} fill={x.color} />)}
                     </Pie>
-                    <Tooltip formatter={(v) => money(v)} />
+                    <Tooltip formatter={(v) => money(v, user.currency)} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -95,7 +95,7 @@ export default function Dashboard() {
                     <span className="w-2.5 h-2.5 rounded-full" style={{ background: x.color }} />
                     <span className="flex-1 truncate text-slate-600">{x.name}</span>
                     <span className="text-slate-400 text-xs">{x.count}</span>
-                    <span className="tabular-nums font-medium w-20 text-right">{compactMoney(x.value)}</span>
+                    <span className="tabular-nums font-medium w-20 text-right">{compactMoney(x.value, user.currency)}</span>
                   </li>
                 ))}
               </ul>
@@ -116,11 +116,11 @@ export default function Dashboard() {
           <h2 className="font-semibold">Spending</h2>
           <div>
             <div className="text-xs text-slate-500">Purchases this year</div>
-            <div className="text-2xl font-semibold tabular-nums">{money(d.value.this_year)}</div>
+            <div className="text-2xl font-semibold tabular-nums">{money(d.value.this_year, user.currency)}</div>
           </div>
           <div>
             <div className="text-xs text-slate-500">Repairs &amp; service this year</div>
-            <div className="text-lg font-semibold tabular-nums">{money(d.value.service_this_year)}</div>
+            <div className="text-lg font-semibold tabular-nums">{money(d.value.service_this_year, user.currency)}</div>
           </div>
           <Link to="/spending" className="btn-secondary w-full">Open spending report</Link>
         </section>

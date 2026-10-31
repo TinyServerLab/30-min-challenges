@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AlertTriangle, ArrowLeft, ChevronDown, Save, Sparkles } from 'lucide-react'
 import { api } from '../core/api'
 import { useAuth } from '../core/auth'
-import { fmtDate, STATUS_LABEL, todayISO } from '../core/format'
+import { currencySymbol, fmtDate, STATUS_LABEL, todayISO } from '../core/format'
 import { Field, PageLoader, useToast } from '../components/ui'
 import Uploader from '../components/Uploader'
 import Attachments from '../components/Attachments'
@@ -181,7 +181,7 @@ export default function AssetForm() {
         <h2 className="font-semibold mb-3">Purchase</h2>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Purchase date *"><input type="date" className={`input ${sg('purchase_date')}`} required max={todayISO()} value={f.purchase_date} onChange={set('purchase_date')} /></Field>
-          <Field label="Price (₹) *">
+          <Field label={`Price (${currencySymbol(f.currency)}) *`}>
             <input type="number" inputMode="decimal" step="0.01" min="0" className={`input ${sg('purchase_price')}`} required value={f.purchase_price} onChange={set('purchase_price')} placeholder="0" />
           </Field>
           <Field label="Store / website"><input className={`input ${sg('vendor')}`} list="vendors" value={f.vendor} onChange={set('vendor')} placeholder="Amazon, Croma…" /></Field>
@@ -230,7 +230,7 @@ export default function AssetForm() {
           {showExt && (
             <div className="grid grid-cols-2 gap-3 mt-3">
               <Field label="Provider" className="col-span-2 sm:col-span-1"><input className="input" value={f.ext_warranty_provider} onChange={set('ext_warranty_provider')} placeholder="e.g. Croma Zip Care, OneAssist" /></Field>
-              <Field label="Cost (₹)"><input type="number" step="0.01" min="0" className="input" value={f.ext_warranty_cost} onChange={set('ext_warranty_cost')} /></Field>
+              <Field label={`Cost (${currencySymbol(f.currency)})`}><input type="number" step="0.01" min="0" className="input" value={f.ext_warranty_cost} onChange={set('ext_warranty_cost')} /></Field>
               <Field label="Extra months" hint="Starts after the manufacturer warranty ends">
                 <input type="number" min="0" max="600" className="input" value={f.ext_warranty_months} onChange={set('ext_warranty_months')} />
               </Field>

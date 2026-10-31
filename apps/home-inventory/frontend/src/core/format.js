@@ -9,12 +9,21 @@ export const money = (v, currency = 'INR', exact = false) => {
   return (exact ? inrExact : inr).format(n)
 }
 
-export const compactMoney = (v) => {
+export const compactMoney = (v, currency = 'INR') => {
   const n = Number(v || 0)
+  if (currency !== 'INR') {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency, notation: 'compact', maximumFractionDigits: 1 }).format(n)
+  }
   if (n >= 1e7) return `₹${(n / 1e7).toFixed(1).replace(/\.0$/, '')}Cr`
   if (n >= 1e5) return `₹${(n / 1e5).toFixed(1).replace(/\.0$/, '')}L`
   if (n >= 1e3) return `₹${(n / 1e3).toFixed(1).replace(/\.0$/, '')}k`
   return `₹${n.toFixed(0)}`
+}
+
+export const currencySymbol = (code = 'INR') => {
+  const part = new Intl.NumberFormat('en', { style: 'currency', currency: code, currencyDisplay: 'narrowSymbol' })
+    .formatToParts(0).find((p) => p.type === 'currency')
+  return part ? part.value : code
 }
 
 export const fmtDate = (d) => {
