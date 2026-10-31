@@ -16,6 +16,31 @@ shared Caddy reverse proxy. See each app's own README for setup.
 
 Newest first. Append new entries at the top of this list.
 
+### 2026-10-31 — Home Inventory: option to split off the shared database
+- New `apps/home-inventory/docker-compose-standalone.yml`, same pattern as
+  the Finance tracker's: an extra `db` service running its own Postgres
+  instead of reusing `shared-postgres`. `docker-compose.yml` (the default,
+  shared-DB setup) is unchanged — this is only for when you want to pull an
+  app off the shared database.
+- **Upgrade step:** none for the default setup. To switch an existing
+  install, dump the `home_inventory` database from shared-postgres, restore
+  it into the new `db` service, then swap the compose file in. A fresh
+  install just needs `docker compose -f docker-compose-standalone.yml up -d
+  --build` — the app creates its own schema, no dump needed.
+
+### 2026-10-31 — Home Inventory: per-user currency + account removal
+- Settings → profile now has a currency picker. It's a label only — it sets
+  the default currency for assets that user adds next; nothing already saved
+  is converted or re-labeled.
+- Settings → profile has "Delete my account" (asks for your password first).
+  Settings → Family members has "Remove" per family member. Either way, the
+  person's assets stay, just without their name attached. The first account
+  ever created can't be removed by either path, so the household can't lock
+  itself out.
+- **Upgrade step:** `docker compose up -d --build` in `apps/home-inventory` —
+  the new `currency` column is applied automatically on startup (migration
+  `0003_user_currency`), defaulting every existing account to `INR`.
+
 ### 2026-10-22 — Finance tracker: works behind Caddy at /finance
 - The app assumed it was served at the site root, so through
   `https://apps.tinyserverlab.in/finance` its scripts and API calls went to

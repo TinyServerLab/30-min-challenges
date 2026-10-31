@@ -111,6 +111,32 @@ ok(csv_r.status_code == 200 and "Samsung" in csv_r.text, "CSV export")
 st = c.get("/api/notifications/status").json()
 ok(st["due_now"] >= 2, f"reminders due now: {st['due_now']}")
 
+# ---- per-user currency preference (label only — no conversion)
+r = c.patch("/api/auth/me", json={"currency": "usd"})
+ok(r.status_code == 200 and r.json()["currency"] == "USD", "profile currency saved + uppercased")
+c.patch("/api/auth/me", json={"currency": "INR"})  # restore
+
+# ---- removing user accounts, without touching the real login used for this run
+me = c.get("/api/auth/me").json()
+primary_id = min(u["id"] for u in c.get("/api/users").json())
+ok(c.delete(f"/api/users/{primary_id}").status_code == 400, "primary admin account can't be removed")
+ok(c.delete(f"/api/users/{me['id']}").status_code == 400, "admin can't remove themselves this way")
+
+throwaway = c.post("/api/users", json={"email": "smoketest-throwaway@example.com",
+                                        "display_name": "Smoketest Throwaway", "password": "throwaway-pw-123"}).json()
+ok(c.delete(f"/api/users/{throwaway['id']}").status_code == 204, "admin removes a family member")
+ok(all(u["id"] != throwaway["id"] for u in c.get("/api/users").json()), "removed user gone from the list")
+
+throwaway2 = c.post("/api/users", json={"email": "smoketest-throwaway2@example.com",
+                                         "display_name": "Smoketest Throwaway 2", "password": "throwaway-pw-123"}).json()
+c2 = httpx.Client(base_url=base, headers=H, follow_redirects=False, timeout=30)
+c2.post("/api/auth/login", json={"login": "smoketest-throwaway2@example.com", "password": "throwaway-pw-123"})
+ok(c2.post("/api/auth/delete-account", json={"current_password": "wrong"}).status_code == 400,
+   "wrong password blocks self-delete")
+ok(c2.post("/api/auth/delete-account", json={"current_password": "throwaway-pw-123"}).status_code == 204,
+   "self-delete own account")
+ok(c2.get("/api/auth/me").status_code == 401, "session gone after self-delete")
+
 # ---- SPA under base path
 html = c.get("/").text
 ok('<base href="/inventory/" />' in html, "index.html has <base href=/inventory/>")

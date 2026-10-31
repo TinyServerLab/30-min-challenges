@@ -21,7 +21,12 @@ export function AuthProvider({ children }) {
     try { await api('auth/logout', { method: 'POST' }) } finally { setUser(null) }
   }, [])
 
-  return <AuthCtx.Provider value={{ user, setUser, login, logout }}>{children}</AuthCtx.Provider>
+  const deleteAccount = useCallback(async (current_password) => {
+    await api('auth/delete-account', { method: 'POST', body: { current_password } })
+    setUser(null)
+  }, [])
+
+  return <AuthCtx.Provider value={{ user, setUser, login, logout, deleteAccount }}>{children}</AuthCtx.Provider>
 }
 
 export const useAuth = () => useContext(AuthCtx)

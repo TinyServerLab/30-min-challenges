@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from ..db import get_db
 from ..models import User
-from ..schemas import LoginIn, PasswordChange, ProfileUpdate, UserOut
+from ..schemas import AccountDelete, LoginIn, PasswordChange, ProfileUpdate, UserOut
 from ..security import (audit, client_ip, create_session, destroy_session, get_current_user,
                         hash_password, throttle, validate_password_strength, verify_password)
 
@@ -72,6 +72,21 @@ def change_password(body: PasswordChange, request: Request, response: Response,
     db.execute(delete(UserSession).where(UserSession.user_id == u.id))
     create_session(db, u, request, response)
     audit(db, u.id, "password.change")
+    db.commit()
+    response.status_code = 204
+    return response
+
+
+@router.post("/delete-account", status_code=204)
+def delete_account(body: AccountDelete, request: Request, response: Response,
+                   user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not verify_password(body.current_password, user.password_hash):
+        raise HTTPException(400, "Current password is incorrect")
+    if user.id == db.scalar(select(func.min(User.id))):
+        raise HTTPException(400, "The primary admin account cannot be deleted")
+    audit(db, user.id, "user.delete_self", "user", user.id, email=user.email)
+    destroy_session(db, request, response)
+    db.delete(user)
     db.commit()
     response.status_code = 204
     return response

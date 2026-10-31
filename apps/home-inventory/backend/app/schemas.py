@@ -34,6 +34,7 @@ class UserOut(ORM):
     is_admin: bool
     is_active: bool
     notify_email: bool
+    currency: str
     last_login_at: datetime | None = None
 
 
@@ -57,6 +58,17 @@ class UserUpdate(BaseModel):
 class ProfileUpdate(BaseModel):
     display_name: str | None = Field(default=None, max_length=100)
     notify_email: bool | None = None
+    currency: str | None = Field(default=None, min_length=3, max_length=3)
+
+    @field_validator("currency", mode="before")
+    @classmethod
+    def _upper_currency(cls, v):
+        if not v:
+            return v
+        v = v.strip().upper()
+        if len(v) != 3 or not v.isalpha():
+            raise ValueError("currency must be a 3-letter code")
+        return v
 
 
 class PasswordChange(BaseModel):
@@ -66,6 +78,10 @@ class PasswordChange(BaseModel):
 
 class PasswordReset(BaseModel):
     new_password: str = Field(min_length=10, max_length=200)
+
+
+class AccountDelete(BaseModel):
+    current_password: str
 
 
 # ------------------------------------------------------------------- categories

@@ -19,6 +19,7 @@ class User(Base):
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     notify_email: Mapped[bool] = mapped_column(Boolean, default=True)
+    currency: Mapped[str] = mapped_column(String(3), default="INR")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default="now()")
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default="now()")
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

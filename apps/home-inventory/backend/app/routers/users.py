@@ -50,6 +50,20 @@ def update_user(user_id: int, body: UserUpdate, admin: User = Depends(require_ad
     return u
 
 
+@router.delete("/{user_id}", status_code=204)
+def delete_user(user_id: int, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    if user_id == admin.id:
+        raise HTTPException(400, "Delete your own account from your profile settings")
+    u = db.get(User, user_id)
+    if not u:
+        raise HTTPException(404, "User not found")
+    if u.id == db.scalar(select(func.min(User.id))):
+        raise HTTPException(400, "The primary admin account cannot be removed")
+    audit(db, admin.id, "user.delete", "user", u.id, email=u.email)
+    db.delete(u)
+    db.commit()
+
+
 @router.post("/{user_id}/reset-password", status_code=204)
 def reset_password(user_id: int, body: PasswordReset, admin: User = Depends(require_admin),
                    db: Session = Depends(get_db)):

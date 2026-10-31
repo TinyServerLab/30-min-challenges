@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AlertTriangle, ArrowLeft, ChevronDown, Save, Sparkles } from 'lucide-react'
 import { api } from '../core/api'
+import { useAuth } from '../core/auth'
 import { fmtDate, STATUS_LABEL, todayISO } from '../core/format'
 import { Field, PageLoader, useToast } from '../components/ui'
 import Uploader from '../components/Uploader'
@@ -35,7 +36,8 @@ export default function AssetForm() {
   const editing = !!id
   const nav = useNavigate()
   const toast = useToast()
-  const [f, setF] = useState(editing ? null : EMPTY)
+  const { user } = useAuth()
+  const [f, setF] = useState(editing ? null : { ...EMPTY, currency: user.currency })
   const [cats, setCats] = useState([])
   const [sugg, setSugg] = useState({ brands: [], vendors: [], locations: [], owners: [], payment_methods: [] })
   const [attachments, setAttachments] = useState([])

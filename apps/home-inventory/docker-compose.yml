@@ -1,5 +1,6 @@
 # Home Asset + Warranty
 # Only ONE container. Reuses the existing shared PostgreSQL and Caddy — neither is created here.
+# Need a dedicated, split-out database instead? See docker-compose-standalone.yml.
 #
 #   cp .env.example .env && nano .env
 #   ./db/init-db.sh              # once: creates role + database on shared-postgres

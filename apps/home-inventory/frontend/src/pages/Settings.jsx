@@ -21,11 +21,21 @@ function Section({ icon: I, title, children, action }) {
   )
 }
 
+// Label only — a default for new assets and a display hint. No conversion: existing
+// amounts keep whatever currency they were saved with.
+const CURRENCIES = [
+  ['INR', 'INR — ₹ Indian Rupee'], ['USD', 'USD — $ US Dollar'], ['EUR', 'EUR — € Euro'],
+  ['GBP', 'GBP — £ British Pound'], ['AUD', 'AUD — A$ Australian Dollar'], ['CAD', 'CAD — C$ Canadian Dollar'],
+  ['SGD', 'SGD — S$ Singapore Dollar'], ['AED', 'AED — UAE Dirham'], ['JPY', 'JPY — ¥ Japanese Yen'],
+  ['CNY', 'CNY — ¥ Chinese Yuan'],
+]
+
 function Profile() {
-  const { user, setUser } = useAuth()
+  const { user, setUser, deleteAccount } = useAuth()
   const toast = useToast()
   const [name, setName] = useState(user.display_name)
   const [pw, setPw] = useState({ current_password: '', new_password: '', confirm: '' })
+  const [delPw, setDelPw] = useState(null)
 
   const saveProfile = async (patch) => {
     try { setUser(await api('auth/me', { method: 'PATCH', body: patch })); toast('Saved') } catch (e) { toast(e.message, 'error') }
@@ -39,6 +49,10 @@ function Profile() {
       toast('Password changed. Other devices were signed out.')
     } catch (ex) { toast(ex.message, 'error') }
   }
+  const doDelete = async (e) => {
+    e.preventDefault()
+    try { await deleteAccount(delPw) } catch (ex) { toast(ex.message, 'error') }
+  }
 
   return (
     <div className="grid lg:grid-cols-2 gap-5">
@@ -50,6 +64,11 @@ function Profile() {
               <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
               <button className="btn-secondary" disabled={!name.trim() || name === user.display_name} onClick={() => saveProfile({ display_name: name.trim() })}>Save</button>
             </div>
+          </Field>
+          <Field label="Currency" hint="Used as the default for new assets">
+            <select className="input" value={user.currency} onChange={(e) => saveProfile({ currency: e.target.value })}>
+              {CURRENCIES.map(([code, label]) => <option key={code} value={code}>{label}</option>)}
+            </select>
           </Field>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" className="accent-brand-700 w-4 h-4" checked={user.notify_email} onChange={(e) => saveProfile({ notify_email: e.target.checked })} />
@@ -67,6 +86,18 @@ function Profile() {
           <button className="btn-primary">Update password</button>
         </form>
       </Section>
+      <Section icon={Trash2} title="Delete account">
+        <p className="text-sm text-slate-600 mb-3">Permanently delete your account and sign you out everywhere. Assets you added stay, just without your name on them. This can't be undone.</p>
+        <button className="btn-secondary text-red-600" onClick={() => setDelPw('')}>Delete my account</button>
+      </Section>
+      <Modal open={delPw !== null} onClose={() => setDelPw(null)} title="Delete your account">
+        <form onSubmit={doDelete} className="space-y-3">
+          <Field label="Current password" hint="Confirm it's you — this can't be undone">
+            <input type="password" className="input" autoComplete="current-password" required value={delPw || ''} onChange={(e) => setDelPw(e.target.value)} />
+          </Field>
+          <div className="flex justify-end gap-2"><button type="button" className="btn-secondary" onClick={() => setDelPw(null)}>Cancel</button><button className="btn-secondary text-red-600">Delete my account</button></div>
+        </form>
+      </Modal>
     </div>
   )
 }
@@ -91,6 +122,12 @@ function UsersAdmin() {
     e.preventDefault()
     try { await api(`users/${reset.id}/reset-password`, { method: 'POST', body: { new_password: reset.pw } }); setReset(null); toast('Password reset') } catch (ex) { toast(ex.message, 'error') }
   }
+  const remove = async (u) => {
+    if (!window.confirm(`Remove ${u.display_name}? This can't be undone.`)) return
+    try { await api(`users/${u.id}`, { method: 'DELETE' }); load(); toast('User removed') } catch (ex) { toast(ex.message, 'error') }
+  }
+  // the first account ever created (always the oldest id) is protected from removal server-side too
+  const primaryId = users.reduce((min, u) => Math.min(min, u.id), Infinity)
 
   return (
     <Section icon={Users} title="Family members"
@@ -108,6 +145,7 @@ function UsersAdmin() {
                 <button className="btn-ghost btn-sm" onClick={() => setReset({ ...u, pw: '' })}>Reset password</button>
                 <button className="btn-ghost btn-sm" onClick={() => patch(u, { is_admin: !u.is_admin })}>{u.is_admin ? 'Remove admin' : 'Make admin'}</button>
                 <button className="btn-ghost btn-sm" onClick={() => patch(u, { is_active: !u.is_active })}>{u.is_active ? 'Disable' : 'Enable'}</button>
+                {u.id !== primaryId && <button className="btn-ghost btn-sm text-red-600" onClick={() => remove(u)}>Remove</button>}
               </div>
             )}
           </li>
