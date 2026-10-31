@@ -1,7 +1,0 @@
-**/node_modules
-frontend/dist
-backend/static
-data
-backups
-.env
-**/__pycache__
