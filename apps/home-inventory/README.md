@@ -1,1 +1,1 @@
-Content moved to https://github.com/TinyServerLab/home-inventory
+### 📎 Code has been moved, check on [Home Invenotry - Repo](https://github.com/TinyServerLab/home-inventory)
